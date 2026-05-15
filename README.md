@@ -1,7 +1,5 @@
 # 🐾 PetSafe - Sistema Multiplataforma para Gestión de Centros de Adopción y Recuperación de Mascotas
 
-![PetSafe Banner](https://via.placeholder.com/1200x400/00bfff/ffffff?text=PetSafe)
-
 **PetSafe** es una plataforma digital integral diseñada para centralizar la gestión de refugios de animales y facilitar la adopción responsable y la recuperación de mascotas perdidas en España.
 
 ---
