@@ -11,6 +11,7 @@ class Reporte {
   String direccion;
   final DateTime fecha;
   bool encontrado;
+  final String idUsuario;
 
   Reporte({
     required this.id,
@@ -25,6 +26,7 @@ class Reporte {
     required this.direccion,
     required this.fecha,
     this.encontrado = false,
+    this.idUsuario = 'anonimo',
   });
 
   Reporte copyWith({
@@ -40,6 +42,7 @@ class Reporte {
     String? direccion,
     DateTime? fecha,
     bool? encontrado,
+    String? idUsuario,
   }) {
     return Reporte(
       id: id ?? this.id,
@@ -54,6 +57,7 @@ class Reporte {
       direccion: direccion ?? this.direccion,
       fecha: fecha ?? this.fecha,
       encontrado: encontrado ?? this.encontrado,
+      idUsuario: idUsuario ?? this.idUsuario,
     );
   }
 
@@ -71,6 +75,7 @@ class Reporte {
       direccion: json['direccion'] ?? '',
       fecha: DateTime.parse(json['fecha']),
       encontrado: json['encontrado'] ?? false,
+      idUsuario: json['idUsuario'] ?? 'anonimo',
     );
   }
 
@@ -88,6 +93,7 @@ class Reporte {
       'direccion': direccion,
       'fecha': fecha.toIso8601String(),
       'encontrado': encontrado,
+      'idUsuario': idUsuario,
     };
   }
 }

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../tema.dart';
+import '../../providers/auth_provider.dart';
 
 // Pantalla para recuperar password
-class RecuperarPasswordScreen extends StatefulWidget {
+class RecuperarPasswordScreen extends ConsumerStatefulWidget {
   const RecuperarPasswordScreen({super.key});
 
   @override
-  State<RecuperarPasswordScreen> createState() => _RecuperarPasswordScreenState();
+  ConsumerState<RecuperarPasswordScreen> createState() => _RecuperarPasswordScreenState();
 }
 
-class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
+class _RecuperarPasswordScreenState extends ConsumerState<RecuperarPasswordScreen> {
   final _emailController = TextEditingController();
   bool _enviado = false;
 
@@ -28,7 +30,7 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
   }
 
   // Valida el email y muestra la confirmacion
-  void _enviarEnlace() {
+  Future<void> _enviarEnlace() async {
     final email = _emailController.text.trim();
 
     if (email.isEmpty) {
@@ -40,11 +42,18 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
       return;
     }
 
-    setState(() => _enviado = true);
+    try {
+      await ref.read(authProvider.notifier).recuperarPassword(email);
+      if (mounted) setState(() => _enviado = true);
+    } catch (e) {
+      _mostrarError('Error: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+
     return Scaffold(
       backgroundColor: colorBlanco,
       body: Column(
@@ -103,7 +112,11 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
           Expanded(
             child: _enviado
                 ? const _PantallaConfirmacion()
-                : _Formulario(emailController: _emailController, onEnviar: _enviarEnlace),
+                : _Formulario(
+                    emailController: _emailController, 
+                    onEnviar: _enviarEnlace,
+                    cargando: authState.cargando,
+                  ),
           ),
         ],
       ),
@@ -115,8 +128,9 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
 class _Formulario extends StatelessWidget {
   final TextEditingController emailController;
   final VoidCallback onEnviar;
+  final bool cargando;
 
-  const _Formulario({required this.emailController, required this.onEnviar});
+  const _Formulario({required this.emailController, required this.onEnviar, required this.cargando});
 
   @override
   Widget build(BuildContext context) {
@@ -133,6 +147,7 @@ class _Formulario extends StatelessWidget {
           TextField(
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
+            enabled: !cargando,
             decoration: const InputDecoration(
               hintText: 'correo@ejemplo.com',
               prefixIcon: Icon(Icons.email_outlined, color: colorTextoSuave),
@@ -140,17 +155,19 @@ class _Formulario extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: onEnviar,
+            onPressed: cargando ? null : onEnviar,
             style: ElevatedButton.styleFrom(
               backgroundColor: colorPrimario,
               foregroundColor: colorBlanco,
               minimumSize: const Size(double.infinity, 52),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text(
-              'Enviar enlace',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
+            child: cargando 
+                ? const CircularProgressIndicator(color: colorBlanco)
+                : const Text(
+                    'Enviar enlace',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
           ),
           const SizedBox(height: 16),
           Center(

@@ -13,6 +13,7 @@ final List<Reporte> reportesMock = [
     longitud: -3.7038,
     direccion: 'Parque del Retiro, Madrid',
     fecha: DateTime(2026, 4, 28),
+    idUsuario: '2',
     encontrado: false,
   ),
   Reporte(
@@ -27,6 +28,7 @@ final List<Reporte> reportesMock = [
     longitud: -3.6900,
     direccion: 'Calle Gran Vía, Madrid',
     fecha: DateTime(2026, 4, 27),
+    idUsuario: '2',
     encontrado: false,
   ),
   Reporte(

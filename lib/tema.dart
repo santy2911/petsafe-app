@@ -1,82 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Colores
-const colorPrimario     = Color(0xFF00897B);
-const colorAdoptar      = Color(0xFF00796B);
-const colorPerdidas     = Color(0xFFE05C2A); 
-const colorReportar     = Color(0xFF5FAD41); 
-const colorFondo        = Color(0xFFF5F5F5);
-const colorBlanco       = Color(0xFFFFFFFF);
-const colorTexto        = Color(0xFF1A1A1A);
-const colorTextoSuave   = Color(0xFF757575);
-const colorError        = Color(0xFFD32F2F);
-const colorAcento       = Color(0xFFB2DFDB);
+// --- PALETA DE COLORES OFICIAL PETSAFE ---
 
-// Borde usado en los inputs
-final bordeInput = OutlineInputBorder(
-  borderRadius: BorderRadius.circular(12),
-  borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-);
+// Principales (Teal)
+const colorPrimario       = Color(0xFF26C6A6);
+const colorAdoptar        = Color(0xFF26C6A6);
+const colorPrimarioLight  = Color(0xFFE8F8F5);
 
-// Tema principal de la app
+// Acentos (Pink)
+const colorAcentoRosa     = Color(0xFFFF6B8A);
+const colorPerdidas       = Color(0xFFFF6B8A);
+const colorReportar       = Color(0xFFFF6B8A);
+const colorAcentoLight    = Color(0xFFFFF0F3);
+
+// Gamificación (Purple)
+const colorXP             = Color(0xFF5C6BC0);
+const colorXPLight        = Color(0xFFECEFFE);
+
+// Neutros y Superficies
+const colorFondo          = Color(0xFFF5F7FA);
+const colorBlanco         = Color(0xFFFFFFFF);
+const colorSurface        = Color(0xFFFFFFFF);
+const colorSidebar        = Color(0xFF1A1A2E);
+
+// Texto
+const colorTexto          = Color(0xFF0F172A);
+const colorTextoSuave     = Color(0xFF8A8A9A);
+
+// Otros
+const colorError          = Color(0xFFEF4444);
+const colorAcento         = Color(0xFFF59E0B); // Ámbar
+
+// --- ESTILOS COMPARTIDOS ---
+
+final sombraSuave = [
+  BoxShadow(
+    color: const Color(0xFF1A1A2E).withValues(alpha: 0.06),
+    blurRadius: 24,
+    offset: const Offset(0, 8),
+  ),
+];
+
+// --- TEMA DATA ---
+
 final temaApp = ThemeData(
   useMaterial3: true,
   colorScheme: ColorScheme.fromSeed(
     seedColor: colorPrimario,
     primary: colorPrimario,
-    secondary: colorAdoptar,
+    onPrimary: colorBlanco,
+    secondary: colorXP,
+    onSecondary: colorBlanco,
     error: colorError,
-    surface: colorFondo,
+    surface: colorSurface,
+    onSurface: colorTexto,
   ),
   scaffoldBackgroundColor: colorFondo,
-  fontFamily: 'Roboto',
+  fontFamily: 'Outfit',
 
-  // Barra superior
   appBarTheme: const AppBarTheme(
-    backgroundColor: colorPrimario,
-    foregroundColor: colorBlanco,
+    backgroundColor: colorFondo,
+    foregroundColor: colorTexto,
     elevation: 0,
     centerTitle: true,
+    scrolledUnderElevation: 0,
     titleTextStyle: TextStyle(
-      color: colorBlanco,
-      fontSize: 18,
-      fontWeight: FontWeight.w600,
+      color: colorTexto,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      fontFamily: 'Outfit',
     ),
   ),
 
-  // Botones principales
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: colorPrimario,
       foregroundColor: colorBlanco,
-      minimumSize: const Size(double.infinity, 52),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      minimumSize: const Size(double.infinity, 56),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
     ),
   ),
 
-  // Campos de texto
+  cardTheme: CardThemeData(
+    elevation: 0,
+    color: colorSurface,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(24),
+      side: BorderSide(color: colorTexto.withValues(alpha: 0.12), width: 1.2),
+    ),
+  ),
+
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
     fillColor: colorBlanco,
-    border: bordeInput,
-    enabledBorder: bordeInput,
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: colorPrimario, width: 2),
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    hintStyle: const TextStyle(color: colorTextoSuave),
-  ),
-
-  // Tarjetas
-  cardTheme: CardThemeData(
-    elevation: 2,
-    color: colorBlanco,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: colorPrimario, width: 2)),
+    hintStyle: const TextStyle(color: colorTextoSuave, fontSize: 15),
   ),
 );
 
-// Controla si esta activo el modo oscuro
 final modoOscuroProvider = StateProvider<bool>((ref) => false);

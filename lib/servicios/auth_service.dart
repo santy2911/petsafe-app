@@ -75,6 +75,22 @@ class AuthService {
     await _storage.write(key: _keyToken, value: token);
   }
 
+  // Actualizar perfil
+  static Future<Usuario> actualizarPerfil(String id, String nombre, String telefono) async {
+    // Cuando llegue el backend:
+    // final data = await ApiService.put('/usuarios/$id', {'nombre': nombre, 'telefono': telefono});
+    // return Usuario.fromJson(data);
+
+    await Future.delayed(const Duration(milliseconds: 500));
+    return Usuario(
+      id: id,
+      nombre: nombre,
+      email: 'demo@petsafe.es',
+      telefono: telefono,
+      imagenUrl: '',
+    );
+  }
+
   // Token en memoria para acceso rápido sin leer storage cada vez
   static String? _tokenEnMemoria;
   static String? get token => _tokenEnMemoria;

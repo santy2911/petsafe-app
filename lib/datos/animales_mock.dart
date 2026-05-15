@@ -16,7 +16,8 @@ final List<Animal> animalesMock = [
     esterilizado: false,
     microchip: true,
     refugio: 'Refugio Esperanza Madrid',
-    ubicacionRefugio: 'Madrid, España',
+    ubicacionRefugio: 'España',
+    estado: 'Disponible',
   ),
   Animal(
     id: '2',
@@ -33,7 +34,8 @@ final List<Animal> animalesMock = [
     esterilizado: true,
     microchip: false,
     refugio: 'Protectora Los Animales',
-    ubicacionRefugio: 'Barcelona, España',
+    ubicacionRefugio: 'España',
+    estado: 'Disponible',
   ),
   Animal(
     id: '3',
@@ -50,7 +52,8 @@ final List<Animal> animalesMock = [
     esterilizado: true,
     microchip: true,
     refugio: 'Refugio Esperanza Madrid',
-    ubicacionRefugio: 'Madrid, España',
+    ubicacionRefugio: 'España',
+    estado: 'Disponible',
   ),
   Animal(
     id: '4',
@@ -68,6 +71,7 @@ final List<Animal> animalesMock = [
     microchip: true,
     refugio: 'Protectora Los Animales',
     ubicacionRefugio: 'Valencia, España',
+    estado: 'Disponible',
   ),
   Animal(
     id: '5',
@@ -85,5 +89,6 @@ final List<Animal> animalesMock = [
     microchip: false,
     refugio: 'Refugio Esperanza Madrid',
     ubicacionRefugio: 'Sevilla, España',
+    estado: 'Disponible',
   ),
 ];

@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../modelos/solicitud_adopcion.dart';
 import '../servicios/adopciones_service.dart';
+import '../datos/solicitudes_mock.dart';
+import 'notificaciones_provider.dart';
+import '../servicios/email_service.dart';
 
 // Estado
 class AdopcionesState {
@@ -29,7 +32,9 @@ class AdopcionesState {
 
 // Notifier
 class AdopcionesNotifier extends StateNotifier<AdopcionesState> {
-  AdopcionesNotifier() : super(const AdopcionesState()) {
+  final Ref _ref;
+
+  AdopcionesNotifier(this._ref) : super(const AdopcionesState()) {
     cargarSolicitudes();
   }
 
@@ -39,6 +44,17 @@ class AdopcionesNotifier extends StateNotifier<AdopcionesState> {
     try {
       final solicitudes = await AdopcionesService.getMisSolicitudes();
       state = state.copyWith(solicitudes: solicitudes, cargando: false);
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), cargando: false);
+    }
+  }
+
+  // Carga TODAS las solicitudes (vista Admin)
+  Future<void> cargarTodasLasSolicitudes() async {
+    state = state.copyWith(cargando: true);
+    try {
+      await Future.delayed(const Duration(milliseconds: 500));
+      state = state.copyWith(solicitudes: solicitudesMock, cargando: false);
     } catch (e) {
       state = state.copyWith(error: e.toString(), cargando: false);
     }
@@ -66,6 +82,43 @@ class AdopcionesNotifier extends StateNotifier<AdopcionesState> {
     }
   }
 
+  // Cambiar estado (Admin)
+  Future<void> actualizarEstado(String id, String nuevoEstado) async {
+    state = state.copyWith(cargando: true);
+    try {
+      await AdopcionesService.actualizarEstado(id, nuevoEstado);
+      
+      final solicitudes = state.solicitudes.map((s) {
+        if (s.id == id) {
+          // Disparamos notificación local
+          final mensaje = nuevoEstado.toLowerCase() == 'aceptada' 
+              ? '¡Felicidades! Tu solicitud para adoptar a ${s.nombreAnimal} ha sido ACEPTADA.' 
+              : 'Lo sentimos, tu solicitud para adoptar a ${s.nombreAnimal} ha sido rechazada.';
+          
+          _ref.read(notificacionesProvider.notifier).agregarNotificacion(
+            titulo: 'Estado de Adopción',
+            mensaje: mensaje,
+            tipo: 'adopcion',
+          );
+
+          // ENVIAR EMAIL (RF-64)
+          EmailService.enviarEmail(
+            destinatario: 'usuario@ejemplo.com', // En el futuro usar el email real del solicitante
+            asunto: 'Actualización de tu solicitud de adopción - PetSafe',
+            cuerpo: 'Hola ${s.nombreUsuario},\n\n$mensaje\n\nGracias por confiar en PetSafe.',
+          );
+
+          return s.copyWith(estado: nuevoEstado);
+        }
+        return s;
+      }).toList();
+      
+      state = state.copyWith(solicitudes: solicitudes, cargando: false);
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), cargando: false);
+    }
+  }
+
   // Cancelar una solicitud
   Future<void> cancelarSolicitud(String idSolicitud) async {
     try {
@@ -89,7 +142,7 @@ class AdopcionesNotifier extends StateNotifier<AdopcionesState> {
 // Provider global
 final adopcionesProvider =
     StateNotifierProvider<AdopcionesNotifier, AdopcionesState>(
-  (ref) => AdopcionesNotifier(),
+  (ref) => AdopcionesNotifier(ref),
 );
 
 // Provider auxiliar: solo el número de solicitudes pendientes
@@ -97,6 +150,6 @@ final solicitudesPendientesProvider = Provider<int>((ref) {
   return ref
       .watch(adopcionesProvider)
       .solicitudes
-      .where((s) => s.estado == 'pendiente')
+      .where((s) => s.estado.toLowerCase() == 'pendiente')
       .length;
 });

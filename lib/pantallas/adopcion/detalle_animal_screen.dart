@@ -3,638 +3,429 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../modelos/animal.dart';
 import '../../tema.dart';
-import '../../datos/favoritos_manager.dart';
-import '../../datos/solicitudes_manager.dart';
-import '../../providers/estadisticas_provider.dart';
+import '../../providers/adopciones_provider.dart';
+import '../../providers/auth_provider.dart';
 
-// Pantalla con el detalle del animal
-class DetalleAnimalScreen extends ConsumerStatefulWidget {
+class AnimalDetalleScreen extends ConsumerStatefulWidget {
   final Animal animal;
-  final String origenRuta;
-  final bool usarPop;
 
-  const DetalleAnimalScreen({
+  const AnimalDetalleScreen({
     super.key,
     required this.animal,
-    this.origenRuta = '/catalogo',
-    this.usarPop = false,
   });
 
   @override
-  ConsumerState<DetalleAnimalScreen> createState() =>
-      _DetalleAnimalScreenState();
+  ConsumerState<AnimalDetalleScreen> createState() => _AnimalDetalleScreenState();
 }
 
-class _DetalleAnimalScreenState extends ConsumerState<DetalleAnimalScreen> {
-  late bool _esFavorito;
+class _AnimalDetalleScreenState extends ConsumerState<AnimalDetalleScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
 
   @override
-  void initState() {
-    super.initState();
-    _esFavorito = FavoritosManager().esFavorito(widget.animal.id);
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
-  // Guarda o quita el animal de favoritos
-  void _toggleFavorito() {
-    final agregado = FavoritosManager().toggleFavorito(widget.animal);
-    setState(() => _esFavorito = agregado);
+  void _mostrarBottomSheetAdopcion() {
+    final comentarioCtrl = TextEditingController();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              agregado ? Icons.favorite : Icons.favorite_border,
-              color: colorBlanco,
-              size: 18,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                agregado
-                    ? '${widget.animal.nombre} guardado — puedes verlo en Perfil > Mis adopciones'
-                    : '${widget.animal.nombre} eliminado de Mis adopciones',
-                style: const TextStyle(color: colorBlanco, fontSize: 13),
-              ),
-            ),
-          ],
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        backgroundColor: agregado ? colorPrimario : colorTextoSuave,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 3),
+        decoration: const BoxDecoration(
+          color: colorBlanco,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Solicitar Adopción',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Cuéntanos por qué quieres adoptar a ${widget.animal.nombre}',
+                style: const TextStyle(color: colorTextoSuave),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: comentarioCtrl,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Escribe aquí tu motivación...',
+                  filled: true,
+                  fillColor: colorFondo,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () async {
+                  final exito = await ref.read(adopcionesProvider.notifier).crearSolicitud(
+                    idAnimal: widget.animal.id,
+                    comentarios: comentarioCtrl.text,
+                  );
+                  if (exito && mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('¡Solicitud enviada con éxito!'),
+                        backgroundColor: colorReportar,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorPrimario,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text('Confirmar Solicitud', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colores = Theme.of(context).colorScheme;
+    final authState = ref.watch(authProvider);
+    final esAdmin = authState.usuarioActual?.rol == 'Admin';
+    final yaSolicitado = ref.watch(adopcionesProvider.notifier).tieneSolicitudLocal(widget.animal.id);
+    
+    // Lista de imágenes (usamos la principal + las de la galería si existen)
+    final listaImagenes = [widget.animal.imagenUrl, ...widget.animal.imagenes];
 
     return Scaffold(
-      backgroundColor: colores.surface,
-      body: CustomScrollView(
-        slivers: [
-          _appBarDetalle(context, colores),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _tarjetaDatos(colores),
-                  const SizedBox(height: 20),
-                  _seccionDescripcion(colores),
-                  const SizedBox(height: 20),
-                  _seccionSalud(colores),
-                  const SizedBox(height: 20),
-                  _tarjetaRefugio(colores),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: _barraAdopcion(context, colores),
-    );
-  }
-
-  // Appbar con la foto del animal
-  SliverAppBar _appBarDetalle(BuildContext context, ColorScheme colores) {
-    return SliverAppBar(
-      expandedHeight: 280,
-      pinned: true,
-      backgroundColor: colorPrimario,
-      leading: IconButton(
-        icon: const Icon(
-          Icons.arrow_back_ios_new,
-          color: colorBlanco,
-          size: 20,
-        ),
-        onPressed: () {
-          if (widget.usarPop) {
-            Navigator.of(context).pop();
-          } else {
-            context.go(widget.origenRuta);
-          }
-        },
-      ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            transitionBuilder: (child, anim) =>
-                ScaleTransition(scale: anim, child: child),
-            child: IconButton(
-              key: ValueKey(_esFavorito),
-              icon: Icon(
-                _esFavorito ? Icons.favorite : Icons.favorite_border,
-                color: _esFavorito ? Colors.red.shade300 : colorBlanco,
-                size: 26,
-              ),
-              onPressed: _toggleFavorito,
-            ),
-          ),
-        ),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
-              widget.animal.imagenUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
-                color: colorAcento,
-                child: const Icon(Icons.pets, size: 80, color: colorPrimario),
-              ),
-            ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black54],
-                  stops: [0.5, 1.0],
-                ),
-              ),
-            ),
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          widget.animal.nombre,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
+      backgroundColor: colorFondo,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: [
+              // Cabecera con Galería/Imagen
+              SliverAppBar(
+                expandedHeight: 450,
+                pinned: true,
+                leading: const SizedBox.shrink(),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Stack(
+                    children: [
+                      Hero(
+                        tag: 'animal_${widget.animal.id}',
+                        child: PageView.builder(
+                          controller: _pageController,
+                          onPageChanged: (idx) => setState(() => _currentPage = idx),
+                          itemCount: listaImagenes.length,
+                          itemBuilder: (context, index) => Image.network(
+                            listaImagenes[index],
+                            fit: BoxFit.cover,
                           ),
                         ),
-                        Text(
-                          widget.animal.raza,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _badgeEstado(),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Muestra si esta disponible
-  Widget _badgeEstado() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: widget.animal.disponible ? colorPrimario : Colors.grey,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        widget.animal.disponible ? 'Disponible' : 'Adoptado',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  // Datos principales del animal
-  Widget _tarjetaDatos(ColorScheme colores) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: _decoracionTarjeta(16, colores),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _InfoItem(
-            icono: Icons.cake_outlined,
-            label: 'Edad',
-            valor:
-                '${widget.animal.edad} ${widget.animal.edad == 1 ? 'anio' : 'anios'}',
-            colores: colores,
-          ),
-          _divider(colores),
-          _InfoItem(
-            icono: Icons.transgender,
-            label: 'Genero',
-            valor: widget.animal.sexo,
-            colores: colores,
-          ),
-          _divider(colores),
-          _InfoItem(
-            icono: Icons.monitor_weight_outlined,
-            label: 'Peso',
-            valor: widget.animal.peso,
-            colores: colores,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Descripcion del animal
-  Widget _seccionDescripcion(ColorScheme colores) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Descripcion',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: colores.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          widget.animal.descripcion,
-          style: TextStyle(
-            color: colores.onSurfaceVariant,
-            fontSize: 14,
-            height: 1.6,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Datos de salud
-  Widget _seccionSalud(ColorScheme colores) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Estado de salud',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: colores.onSurface,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _SaludItem(
-          label: 'Vacunado',
-          valor: widget.animal.vacunado,
-          colores: colores,
-        ),
-        const SizedBox(height: 8),
-        _SaludItem(
-          label: 'Esterilizado',
-          valor: widget.animal.esterilizado,
-          colores: colores,
-        ),
-        const SizedBox(height: 8),
-        _SaludItem(
-          label: 'Microchip',
-          valor: widget.animal.microchip,
-          colores: colores,
-        ),
-      ],
-    );
-  }
-
-  // Datos del refugio
-  Widget _tarjetaRefugio(ColorScheme colores) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _decoracionTarjeta(14, colores),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: colorPrimario.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.home_outlined,
-              color: colorPrimario,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Refugio',
-                style: TextStyle(fontSize: 11, color: colores.onSurfaceVariant),
-              ),
-              Text(
-                widget.animal.refugio,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: colores.onSurface,
-                ),
-              ),
-              Text(
-                widget.animal.ubicacionRefugio,
-                style: TextStyle(fontSize: 12, color: colores.onSurfaceVariant),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Barra inferior de adopcion
-  Widget _barraAdopcion(BuildContext context, ColorScheme colores) {
-    final yaSolicitado = SolicitudesManager().tieneSolicitud(widget.animal.id);
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-      decoration: BoxDecoration(
-        color: colores.surfaceContainer,
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: ElevatedButton.icon(
-        onPressed: yaSolicitado
-            ? null
-            : () => _mostrarDialogoAdopcion(context, colores),
-        icon: Icon(yaSolicitado ? Icons.check : Icons.favorite, size: 18),
-        label: Text(yaSolicitado ? 'Solicitud enviada' : 'Solicitar adopcion'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: yaSolicitado ? colorTextoSuave : colorPrimario,
-          foregroundColor: colorBlanco,
-          minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-      ),
-    );
-  }
-
-  // Dialogo para confirmar
-  void _mostrarDialogoAdopcion(BuildContext context, ColorScheme colores) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colores.surfaceContainerHighest,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🎉', style: TextStyle(fontSize: 48)),
-            const SizedBox(height: 16),
-            Text(
-              'Solicitar adopcion de ${widget.animal.nombre}',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: colores.onSurface,
-              ),
-            ),
-            const SizedBox(height: 10),
-            RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colores.onSurfaceVariant,
-                  height: 1.5,
-                ),
-                children: [
-                  const TextSpan(text: 'Al confirmar, el refugio '),
-                  TextSpan(
-                    text: widget.animal.refugio,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: colores.onSurface,
-                    ),
-                  ),
-                  const TextSpan(
-                    text:
-                        ' recibira tu solicitud y se pondra en contacto contigo.',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    side: BorderSide(color: colores.outline),
-                  ),
-                  child: Text(
-                    'Cancelar',
-                    style: TextStyle(color: colores.onSurface),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    // Guarda la solicitud en el manager
-                    SolicitudesManager().agregar(widget.animal);
-                    // Suma estadistica
-                    ref.read(estadisticasProvider.notifier).sumarAdopcion();
-                    // Refresca el boton
-                    setState(() {});
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: const [
-                            Icon(
-                              Icons.check_circle_outline,
-                              color: colorBlanco,
-                              size: 18,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Solicitud enviada — puedes verla en Perfil > Mis adopciones',
-                                style: TextStyle(
-                                  color: colorBlanco,
-                                  fontSize: 13,
+                      ),
+                      // Indicadores de puntos
+                      if (listaImagenes.length > 1)
+                        Positioned(
+                          bottom: 40,
+                          left: 0,
+                          right: 0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              listaImagenes.length,
+                              (index) => Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                width: _currentPage == index ? 24 : 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: _currentPage == index ? colorBlanco : colorBlanco.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
                             ),
+                          ),
+                        ),
+                      // Gradiente para visibilidad
+                      const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.black38, Colors.transparent, Colors.transparent, Colors.black26],
+                            stops: [0.0, 0.2, 0.8, 1.0],
+                          ),
+                        ),
+                        child: SizedBox.expand(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Información del animal
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: colorBlanco,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                  ),
+                  transform: Matrix4.translationValues(0, -30, 0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.animal.nombre,
+                                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${widget.animal.especie} • ${widget.animal.raza}',
+                                  style: const TextStyle(color: colorTextoSuave, fontSize: 16),
+                                ),
+                              ],
+                            ),
+                            _StatusBadge(label: widget.animal.estado),
                           ],
                         ),
-                        backgroundColor: colorAdoptar,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 32),
+                        
+                        // Chips de info rápida
+                        Row(
+                          children: [
+                            _InfoChip(icon: Icons.cake_outlined, label: '${widget.animal.edad} años'),
+                            const SizedBox(width: 12),
+                            _InfoChip(icon: Icons.transgender_rounded, label: widget.animal.sexo),
+                            const SizedBox(width: 12),
+                            _InfoChip(icon: Icons.monitor_weight_outlined, label: widget.animal.peso),
+                          ],
                         ),
-                        margin: EdgeInsets.all(16),
-                        duration: Duration(seconds: 4),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.check, size: 16),
-                  label: const Text('Confirmar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorPrimario,
-                    foregroundColor: colorBlanco,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+
+                        const SizedBox(height: 32),
+                        Text(
+                          'Sobre ${widget.animal.nombre}',
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          widget.animal.descripcion,
+                          style: const TextStyle(color: colorTextoSuave, fontSize: 16, height: 1.6),
+                        ),
+
+                        const SizedBox(height: 32),
+                        const Text(
+                          'Salud y cuidados',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 16),
+                        _HealthItem(label: 'Vacunación', value: widget.animal.vacunado),
+                        _HealthItem(label: 'Esterilizado', value: widget.animal.esterilizado),
+                        _HealthItem(label: 'Microchip', value: widget.animal.microchip),
+
+                        const SizedBox(height: 32),
+                        const Text(
+                          'Ubicación',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: colorFondo,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.location_on_rounded, color: colorPrimario),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(widget.animal.refugio, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    Text(widget.animal.ubicacionRefugio, style: const TextStyle(color: colorTextoSuave, fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 120), // Espacio para el botón inferior
+                      ],
                     ),
                   ),
                 ),
               ),
             ],
           ),
+
+          // Botón de volver fijo
+          Positioned(
+            top: 20,
+            left: 20,
+            child: SafeArea(
+              child: FloatingActionButton.small(
+                onPressed: () => context.pop(),
+                backgroundColor: Colors.white,
+                foregroundColor: colorTexto,
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+              ),
+            ),
+          ),
+
+          // Botón de acción inferior fijo
+          if (widget.animal.estado == 'Disponible')
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [colorBlanco.withValues(alpha: 0), colorBlanco],
+                    stops: const [0.0, 0.3],
+                  ),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: esAdmin
+                      ? ElevatedButton.icon(
+                          onPressed: () {
+                            // En una fase posterior se abriría el diálogo de edición
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Función de edición próximamente')),
+                            );
+                          },
+                          icon: const Icon(Icons.edit_rounded),
+                          label: const Text('Editar Animal'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorPrimario,
+                            minimumSize: const Size(double.infinity, 56),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                        )
+                      : ElevatedButton(
+                          onPressed: yaSolicitado ? null : _mostrarBottomSheetAdopcion,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorPrimario,
+                            minimumSize: const Size(double.infinity, 56),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: Text(
+                            yaSolicitado ? 'Solicitud Enviada' : 'Solicitar Adopción',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
-
-  // Estilo de tarjetas
-  BoxDecoration _decoracionTarjeta(double radio, ColorScheme colores) {
-    return BoxDecoration(
-      color: colores.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(radio),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.05),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    );
-  }
-
-  // Separador simple
-  Widget _divider(ColorScheme colores) {
-    return Container(width: 1, height: 40, color: colores.outlineVariant);
-  }
 }
 
-// Item de informacion
-class _InfoItem extends StatelessWidget {
-  final IconData icono;
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
   final String label;
-  final String valor;
-  final ColorScheme colores;
-
-  const _InfoItem({
-    required this.icono,
-    required this.label,
-    required this.valor,
-    required this.colores,
-  });
+  const _InfoChip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icono, color: colorPrimario, size: 24),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(color: colores.onSurfaceVariant, fontSize: 11),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          valor,
-          style: TextStyle(
-            color: colores.onSurface,
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: colorFondo,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: colorPrimario, size: 18),
+          const SizedBox(width: 8),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+        ],
+      ),
     );
   }
 }
 
-// Item de salud
-class _SaludItem extends StatelessWidget {
+class _HealthItem extends StatelessWidget {
   final String label;
-  final bool valor;
-  final ColorScheme colores;
-
-  const _SaludItem({
-    required this.label,
-    required this.valor,
-    required this.colores,
-  });
+  final bool value;
+  const _HealthItem({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Icon(
-              Icons.circle_outlined,
-              size: 14,
-              color: colores.onSurfaceVariant,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(fontSize: 14, color: colores.onSurface),
-            ),
-          ],
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-          decoration: BoxDecoration(
-            color: valor
-                ? const Color(0xFF2E7D32).withValues(alpha: 0.15)
-                : const Color(0xFFC62828).withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(20),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(
+            value ? Icons.check_circle_rounded : Icons.cancel_rounded,
+            color: value ? colorPrimario : Colors.grey[300],
+            size: 20,
           ),
-          child: Text(
-            valor ? 'Si' : 'No',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: valor ? const Color(0xFF4CAF50) : const Color(0xFFEF5350),
-            ),
-          ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Text(label, style: const TextStyle(color: colorTexto)),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final String label;
+  const _StatusBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: colorPrimarioLight,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: const TextStyle(color: colorPrimario, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1),
+      ),
     );
   }
 }

@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../modelos/usuario.dart';
 import '../servicios/usuario_service.dart';
 
-class EstadoPerfil {
+class PerfilState {
   final Usuario? usuario;
   final File? foto;
   final bool cargando;
   final String? error;
 
-  const EstadoPerfil({
+  const PerfilState({
     this.usuario,
     this.foto,
     this.cargando = false,
@@ -19,13 +19,13 @@ class EstadoPerfil {
   // Nombre con fallback para que las pantallas no rompan si usuario es null
   String get nombre => usuario?.nombre ?? 'Usuario';
 
-  EstadoPerfil copyWith({
+  PerfilState copyWith({
     Usuario? usuario,
     File? foto,
     bool? cargando,
     String? error,
   }) {
-    return EstadoPerfil(
+    return PerfilState(
       usuario: usuario ?? this.usuario,
       foto: foto ?? this.foto,
       cargando: cargando ?? this.cargando,
@@ -34,8 +34,8 @@ class EstadoPerfil {
   }
 }
 
-class PerfilNotifier extends StateNotifier<EstadoPerfil> {
-  PerfilNotifier() : super(const EstadoPerfil()) {
+class PerfilNotifier extends StateNotifier<PerfilState> {
+  PerfilNotifier() : super(const PerfilState()) {
     cargarPerfil();
   }
 
@@ -79,6 +79,6 @@ class PerfilNotifier extends StateNotifier<EstadoPerfil> {
   }
 }
 
-final perfilProvider = StateNotifierProvider<PerfilNotifier, EstadoPerfil>(
+final perfilProvider = StateNotifierProvider<PerfilNotifier, PerfilState>(
   (ref) => PerfilNotifier(),
-);
+);

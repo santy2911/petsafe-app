@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../modelos/reporte.dart';
 import '../servicios/reportes_service.dart';
+import 'puntos_provider.dart';
+import 'notificaciones_provider.dart';
 
 class ReportesState {
   final List<Reporte> reportes;
@@ -27,13 +29,20 @@ class ReportesState {
 }
 
 class ReportesNotifier extends StateNotifier<ReportesState> {
-  ReportesNotifier() : super(const ReportesState()) {
+  final Ref _ref;
+  ReportesNotifier(this._ref) : super(const ReportesState()) {
     cargarReportes();
   }
 
   Future<void> cargarReportes() async {
-    state = state.copyWith(cargando: true);
+    state = state.copyWith(cargando: true, error: null);
     try {
+      await Future.delayed(const Duration(milliseconds: 800));
+      
+      if (DateTime.now().millisecond % 10 == 0) {
+        throw 'Error al obtener los reportes del mapa.';
+      }
+
       final reportes = await ReportesService.getReportes();
       state = state.copyWith(reportes: reportes, cargando: false);
     } catch (e) {
@@ -53,6 +62,17 @@ class ReportesNotifier extends StateNotifier<ReportesState> {
   Future<void> marcarEncontrado(String id) async {
     try {
       await ReportesService.marcarEncontrado(id);
+      
+      // SUMAR PUNTOS (RF-58)
+      _ref.read(puntosProvider.notifier).sumarPuntos(100, 'Mascota encontrada');
+
+      // NOTIFICACIÓN (RF-34)
+      _ref.read(notificacionesProvider.notifier).agregarNotificacion(
+        titulo: '¡Mascota encontrada!',
+        mensaje: 'Enhorabuena por encontrar a tu mascota. Has ganado 100 puntos extra.',
+        tipo: 'recompensa',
+      );
+
       state = state.copyWith(
         reportes: [
           for (final r in state.reportes)
@@ -76,7 +96,6 @@ class ReportesNotifier extends StateNotifier<ReportesState> {
   }
 }
 
-final reportesProvider =
-    StateNotifierProvider<ReportesNotifier, ReportesState>(
-  (ref) => ReportesNotifier(),
+final reportesProvider = StateNotifierProvider<ReportesNotifier, ReportesState>(
+  (ref) => ReportesNotifier(ref),
 );

@@ -29,13 +29,45 @@ class AuthState {
 
 // Notifier
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(AuthState());
+  AuthNotifier() : super(AuthState()) {
+    checkAuth();
+  }
+
+  Future<void> checkAuth() async {
+    final hasToken = await AuthService.iniciarSesionGuardada();
+    if (hasToken) {
+      // Si hay token, intentamos recuperar el perfil del usuario
+      try {
+        // Podríamos llamar a un endpoint /me aquí, por ahora usamos el mock
+        final usuario = Usuario(
+          id: '1',
+          nombre: 'Usuario Recuperado',
+          email: 'demo@petsafe.es',
+          telefono: '600000000',
+          imagenUrl: '',
+          rol: 'User', // Por defecto, luego el backend dirá el rol real
+        );
+        state = state.copyWith(usuarioActual: usuario);
+      } catch (e) {
+        logout();
+      }
+    }
+  }
 
   Future<void> login(String email, String password) async {
     state = state.copyWith(cargando: true, error: null);
     try {
       final usuario = await AuthService.login(email, password);
-      state = state.copyWith(usuarioActual: usuario, cargando: false);
+      // Actualizamos el usuario con el rol basado en el email para el demo
+      final usuarioConRol = Usuario(
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        telefono: usuario.telefono,
+        imagenUrl: usuario.imagenUrl,
+        rol: email == 'admin@petsafe.es' ? 'Admin' : 'User',
+      );
+      state = state.copyWith(usuarioActual: usuarioConRol, cargando: false);
     } catch (e) {
       state = state.copyWith(error: e.toString(), cargando: false);
     }
@@ -61,9 +93,36 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  void logout() {
-    AuthService.logout();
+  Future<void> logout() async {
+    await AuthService.logout();
     state = AuthState();
+  }
+
+  Future<void> actualizarPerfil(String nombre, String telefono) async {
+    if (state.usuarioActual == null) return;
+    
+    state = state.copyWith(cargando: true, error: null);
+    try {
+      final id = state.usuarioActual!.id;
+      final rol = state.usuarioActual!.rol;
+      final email = state.usuarioActual!.email;
+      
+      final actualizado = await AuthService.actualizarPerfil(id, nombre, telefono);
+      
+      // Mantenemos el rol y el email (que el mock de arriba resetea)
+      final completo = Usuario(
+        id: actualizado.id,
+        nombre: actualizado.nombre,
+        email: email,
+        telefono: actualizado.telefono,
+        imagenUrl: actualizado.imagenUrl,
+        rol: rol,
+      );
+      
+      state = state.copyWith(usuarioActual: completo, cargando: false);
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), cargando: false);
+    }
   }
 }
 
