@@ -59,9 +59,13 @@ https://petsafe-app.vercel.app
 👥 Equipo de Desarrollo
 
 Santiago Velásquez González
+
 Julia Mª Huertas Torres
+
 Vítor Alves Marín
+
 Aarón Ingles Chilet
+
 Vanessa Serrano Vera
 
 Trabajo Final del Módulo de Proyecto
