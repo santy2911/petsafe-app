@@ -65,12 +65,19 @@ class AdopcionesNotifier extends StateNotifier<AdopcionesState> {
     required String idAnimal,
     required String comentarios,
   }) async {
+    if (state.solicitudes.any((s) => s.idAnimal == idAnimal)) {
+      return false;
+    }
     state = state.copyWith(cargando: true);
     try {
       final nueva = await AdopcionesService.crearSolicitud(
         idAnimal: idAnimal,
         comentarios: comentarios,
       );
+      if (state.solicitudes.any((s) => s.idAnimal == idAnimal)) {
+        state = state.copyWith(cargando: false);
+        return false;
+      }
       state = state.copyWith(
         solicitudes: [nueva, ...state.solicitudes],
         cargando: false,

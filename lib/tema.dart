@@ -8,6 +8,9 @@ const colorPrimario       = Color(0xFF26C6A6);
 const colorAdoptar        = Color(0xFF26C6A6);
 const colorPrimarioLight  = Color(0xFFE8F8F5);
 
+// Mapa / geolocalización (azul distinto del teal de adopción)
+const colorMapa           = Color(0xFF2563EB);
+
 // Acentos (Pink)
 const colorAcentoRosa     = Color(0xFFFF6B8A);
 const colorPerdidas       = Color(0xFFFF6B8A);
@@ -87,6 +90,7 @@ final temaApp = ThemeData(
   cardTheme: CardThemeData(
     elevation: 0,
     color: colorSurface,
+    surfaceTintColor: Colors.transparent,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(24),
       side: BorderSide(color: colorTexto.withValues(alpha: 0.12), width: 1.2),
@@ -103,5 +107,15 @@ final temaApp = ThemeData(
     hintStyle: const TextStyle(color: colorTextoSuave, fontSize: 15),
   ),
 );
+
+/// Paneles tipo lista/tabla (admin web): mismo borde y radio que [cardTheme].
+BoxDecoration decorationSuperficieLista() => BoxDecoration(
+      color: colorBlanco,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(
+        color: colorTexto.withValues(alpha: 0.12),
+        width: 1.2,
+      ),
+    );
 
 final modoOscuroProvider = StateProvider<bool>((ref) => false);

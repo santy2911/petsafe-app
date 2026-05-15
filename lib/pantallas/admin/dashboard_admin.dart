@@ -4,6 +4,7 @@ import '../../tema.dart';
 import '../../providers/animales_provider.dart';
 import '../../providers/adopciones_provider.dart';
 import '../../providers/reportes_provider.dart';
+import '../../widgets/boton_notificaciones.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -29,19 +30,21 @@ class AdminDashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Dashboard de Administración'),
         actions: [
+          const BotonNotificaciones(),
+          const SizedBox(width: 8),
           IconButton(
             onPressed: () {
               ref.read(animalesProvider.notifier).recargar();
               ref.read(adopcionesProvider.notifier).cargarTodasLasSolicitudes();
               ref.read(reportesProvider.notifier).cargarReportes();
             },
-            icon: const Icon(Icons.refresh_rounded, color: colorTextoSuave),
+            icon: const Icon(Icons.refresh_rounded),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -68,9 +71,9 @@ class AdminDashboardScreen extends ConsumerWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: 24,
-                  mainAxisSpacing: 24,
-                  childAspectRatio: 1.5,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: crossAxisCount >= 4 ? 2.35 : (crossAxisCount == 2 ? 2.05 : 2.2),
                   children: [
                     _StatCard(
                       label: 'Animales Disponibles',
@@ -111,15 +114,15 @@ class AdminDashboardScreen extends ConsumerWidget {
                   flex: 2,
                   child: Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
                             'Actividad Reciente',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
                           if (adopcionesState.solicitudes.isNotEmpty)
                             _ActivityItem(
                               user: adopcionesState.solicitudes.first.nombreUsuario,
@@ -152,19 +155,19 @@ class AdminDashboardScreen extends ConsumerWidget {
                 Expanded(
                   child: Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
                             'Estado del Sistema',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 12),
                           const _StatusIndicator(label: 'Servidor API', status: 'Online', color: colorPrimario),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           const _StatusIndicator(label: 'Base de Datos', status: 'Conectado', color: colorPrimario),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           const _StatusIndicator(label: 'Servicio Notificaciones', status: 'Online', color: colorPrimario),
                         ],
                       ),
@@ -196,34 +199,39 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: color, size: 28),
+                  child: Icon(icon, color: color, size: 22),
                 ),
-                const Icon(Icons.trending_up, color: Colors.green, size: 20),
+                const Spacer(),
+                Icon(Icons.trending_up_rounded, color: Colors.green.shade600, size: 18),
               ],
             ),
-            const Spacer(),
+            const SizedBox(height: 10),
             Text(
               value,
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: colorTexto),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colorTexto, height: 1.1),
             ),
+            const SizedBox(height: 2),
             Text(
               label,
-              style: const TextStyle(color: colorTextoSuave, fontSize: 14),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: colorTextoSuave, fontSize: 12, height: 1.25),
             ),
           ],
         ),
@@ -250,7 +258,7 @@ class _ActivityItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Container(

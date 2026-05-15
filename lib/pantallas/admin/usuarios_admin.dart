@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../tema.dart';
 import '../../modelos/usuario.dart';
 import '../../providers/usuarios_provider.dart';
+import '../../widgets/boton_notificaciones.dart';
 
 class AdminUsuariosScreen extends ConsumerStatefulWidget {
   const AdminUsuariosScreen({super.key});
@@ -30,11 +31,26 @@ class _AdminUsuariosScreenState extends ConsumerState<AdminUsuariosScreen> {
       backgroundColor: colorFondo,
       appBar: AppBar(
         title: const Text('Gestión de Usuarios'),
+        actions: [
+          const BotonNotificaciones(),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: state.cargando ? null : () => ref.read(usuariosProvider.notifier).cargarUsuarios(),
+            icon: state.cargando
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: colorPrimario),
+                  )
+                : const Icon(Icons.refresh_rounded),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(24),
             child: Row(
               children: [
                 Expanded(
@@ -66,16 +82,12 @@ class _AdminUsuariosScreenState extends ConsumerState<AdminUsuariosScreen> {
           else
             Expanded(
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 32),
-                decoration: BoxDecoration(
-                  color: colorBlanco,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFEBF2F0)),
-                ),
+                margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                decoration: decorationSuperficieLista(),
                 clipBehavior: Clip.antiAlias,
                 child: ListView.separated(
                   itemCount: usuariosFiltrados.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFEBF2F0)),
+                  separatorBuilder: (context, index) => Divider(height: 1, color: colorTexto.withValues(alpha: 0.08)),
                   itemBuilder: (context, index) {
                     final usuario = usuariosFiltrados[index];
                     return ListTile(
@@ -120,7 +132,6 @@ class _AdminUsuariosScreenState extends ConsumerState<AdminUsuariosScreen> {
                 ),
               ),
             ),
-          const SizedBox(height: 32),
         ],
       ),
     );

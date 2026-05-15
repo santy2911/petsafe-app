@@ -20,7 +20,7 @@ class MapaScreen extends ConsumerStatefulWidget {
 
 class _MapaScreenState extends ConsumerState<MapaScreen> {
   late final MapController _mapController;
-  bool _vistaLista = false;
+  bool _vistaLista = true;
   Reporte? _reporteSeleccionado;
 
   @override
@@ -186,16 +186,36 @@ class _MapaScreenState extends ConsumerState<MapaScreen> {
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: Card(
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(12),
-                leading: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(reporte.imagenUrl, width: 60, height: 60, fit: BoxFit.cover)),
-                title: Text(reporte.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(reporte.direccion),
-                trailing: Icon(Icons.chevron_right_rounded, color: reporte.encontrado ? colorPrimario : colorAcento),
-                onTap: () {
-                  setState(() { _vistaLista = false; _reporteSeleccionado = reporte; });
-                  _mapController.move(LatLng(reporte.latitud, reporte.longitud), 16.0);
-                },
+              surfaceTintColor: Colors.transparent,
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  hoverColor: Colors.transparent,
+                  splashFactory: NoSplash.splashFactory,
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(12),
+                  leading: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(reporte.imagenUrl, width: 60, height: 60, fit: BoxFit.cover)),
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _StatusBadge(label: reporte.encontrado ? 'ENCONTRADO' : 'PERDIDO', isEncontrado: reporte.encontrado),
+                      const SizedBox(height: 8),
+                      Text(reporte.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(reporte.direccion),
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF000000)),
+                  onTap: () {
+                    setState(() { _vistaLista = false; _reporteSeleccionado = reporte; });
+                    _mapController.move(LatLng(reporte.latitud, reporte.longitud), 16.0);
+                  },
+                ),
               ),
             ),
           );

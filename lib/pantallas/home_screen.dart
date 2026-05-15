@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../tema.dart';
+import '../modelos/animal.dart';
 import '../providers/animales_provider.dart';
 import '../providers/reportes_provider.dart';
 import '../providers/auth_provider.dart';
@@ -63,7 +64,7 @@ class HomeScreen extends ConsumerWidget {
                   child: _QuickActionCard(
                     label: 'Mapa',
                     icon: Icons.map_rounded,
-                    color: colorPrimario,
+                    color: colorMapa,
                     onTap: () => context.go('/mapa'),
                   ),
                 ),
@@ -88,49 +89,9 @@ class HomeScreen extends ConsumerWidget {
             else if (animalesDisponibles.isEmpty)
               const Text('No hay animales disponibles en este momento.')
             else
-              SizedBox(
-                height: 280,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: animalesDisponibles.length,
-                  itemBuilder: (context, i) {
-                    final animal = animalesDisponibles[i];
-                    return Container(
-                      width: 200,
-                      margin: const EdgeInsets.only(right: 20),
-                      child: InkWell(
-                        onTap: () => context.go('/animal/${animal.id}', extra: animal),
-                        borderRadius: BorderRadius.circular(24),
-                        child: Card(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                                child: Image.network(
-                                  animal.imagenUrl,
-                                  height: 160,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(animal.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                    Text('${animal.raza} • ${animal.edad} años', style: const TextStyle(color: colorTextoSuave, fontSize: 13)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+              _FilaAnimalesHorizontales(
+                animales: animalesDisponibles,
+                onAnimalTap: (animal) => context.go('/animal/${animal.id}', extra: animal),
               ),
             const SizedBox(height: 48),
 
@@ -145,6 +106,8 @@ class HomeScreen extends ConsumerWidget {
               ...reportesActivos.take(3).map((reporte) => Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Card(
+                  color: colorAcentoLight,
+                  surfaceTintColor: Colors.transparent,
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(12),
                     leading: ClipRRect(
@@ -175,6 +138,78 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+class _FilaAnimalesHorizontales extends StatelessWidget {
+  final List<Animal> animales;
+  final void Function(Animal) onAnimalTap;
+
+  const _FilaAnimalesHorizontales({
+    required this.animales,
+    required this.onAnimalTap,
+  });
+
+  static const double _alto = 280;
+  static const double _anchoTarjeta = 200;
+  static const double _margenDcha = 20;
+
+  @override
+  Widget build(BuildContext context) {
+    final n = animales.length;
+    if (n == 0) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: _alto,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const ClampingScrollPhysics(),
+        padding: EdgeInsets.zero,
+        itemCount: n,
+        itemBuilder: (context, i) {
+          final animal = animales[i];
+          return Container(
+            width: _anchoTarjeta,
+            margin: EdgeInsets.only(right: i == n - 1 ? 0 : _margenDcha),
+            child: InkWell(
+              onTap: () => onAnimalTap(animal),
+              borderRadius: BorderRadius.circular(24),
+              child: Card(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      child: Image.network(
+                        animal.imagenUrl,
+                        height: 160,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 160,
+                          color: colorFondo,
+                          child: const Icon(Icons.pets_rounded, color: colorTextoSuave, size: 48),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(animal.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text('${animal.raza} • ${animal.edad} años', style: const TextStyle(color: colorTextoSuave, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _QuickActionCard extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -193,6 +228,7 @@ class _QuickActionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: color.withValues(alpha: 0.35), width: 1),
         ),
         child: Column(
           children: [

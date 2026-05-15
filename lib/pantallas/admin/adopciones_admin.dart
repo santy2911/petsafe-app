@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../tema.dart';
 import '../../modelos/solicitud_adopcion.dart';
 import '../../providers/adopciones_provider.dart';
+import '../../widgets/boton_notificaciones.dart';
 
 class AdminAdopcionesScreen extends ConsumerStatefulWidget {
   const AdminAdopcionesScreen({super.key});
@@ -35,11 +36,13 @@ class _AdminAdopcionesScreenState extends ConsumerState<AdminAdopcionesScreen> {
       appBar: AppBar(
         title: const Text('Gestión de Adopciones'),
         actions: [
+          const BotonNotificaciones(),
+          const SizedBox(width: 8),
           _buildFiltroChip('Todas'),
           _buildFiltroChip('Pendiente'),
           _buildFiltroChip('Aceptada'),
           _buildFiltroChip('Rechazada'),
-          const SizedBox(width: 32),
+          const SizedBox(width: 8),
         ],
       ),
       body: state.cargando && state.solicitudes.isEmpty
@@ -47,7 +50,7 @@ class _AdminAdopcionesScreenState extends ConsumerState<AdminAdopcionesScreen> {
           : state.error != null
               ? Center(child: Text('Error: ${state.error}'))
               : Padding(
-                  padding: const EdgeInsets.all(32),
+                  padding: const EdgeInsets.all(24),
                   child: solicitudes.isEmpty
                       ? const Center(child: Text('No hay solicitudes con este estado'))
                       : ListView.separated(

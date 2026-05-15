@@ -3,6 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../tema.dart';
 
+// Fondo uniforme de los iconos en esta pantalla (gris claro)
+const Color _fondoIconoConfiguracion = Color(0xFFF1F5F9);
+
+// Ancho máximo de los popups (compactos, centrados)
+const double _anchoMaxPopupConfig = 360;
+
 // Pantalla de ajustes de la app
 class ConfiguracionScreen extends ConsumerStatefulWidget {
   const ConfiguracionScreen({super.key});
@@ -43,27 +49,22 @@ class _ConfiguracionScreenState extends ConsumerState<ConfiguracionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colores = Theme.of(context).colorScheme;
-
     return Scaffold(
-      backgroundColor: colores.surface,
+      backgroundColor: colorFondo,
       appBar: AppBar(
         title: const Text('Configuración'),
-        centerTitle: true,
-        backgroundColor: colorPrimario,
-        foregroundColor: colorBlanco,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/perfil'),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         children: [
           _seccionPreferencias(),
-          const SizedBox(height: 24),
-          _seccionCuenta(),
           const SizedBox(height: 32),
+          _seccionCuenta(),
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -76,26 +77,28 @@ class _ConfiguracionScreenState extends ConsumerState<ConfiguracionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _Seccion(titulo: 'Preferencias'),
-        _GrupoTarjetas(
-          items: [
-            _ItemSwitch(
-              icono: Icons.notifications_outlined,
-              colorIcono: colorPrimario,
-              fondoIcono: colorPrimario.withValues(alpha: 0.1),
-              texto: 'Notificaciones push',
-              valor: _notificacionesActivas,
-              onCambio: (v) => setState(() => _notificacionesActivas = v),
-            ),
-            _ItemSwitch(
-              icono: Icons.dark_mode_outlined,
-              colorIcono: Colors.blue,
-              fondoIcono: Colors.blue.withValues(alpha: 0.1),
-              texto: 'Modo oscuro',
-              valor: modoOscuro,
-              onCambio: (v) => ref.read(modoOscuroProvider.notifier).state = v,
-            ),
-          ],
+        const _TituloSeccion(titulo: 'Preferencias'),
+        const SizedBox(height: 16),
+        Card(
+          child: Column(
+            children: [
+              _ItemSwitch(
+                icono: Icons.notifications_outlined,
+                colorIcono: colorPrimario,
+                texto: 'Notificaciones push',
+                valor: _notificacionesActivas,
+                onCambio: (v) => setState(() => _notificacionesActivas = v),
+              ),
+              const Divider(height: 1, indent: 20, endIndent: 20),
+              _ItemSwitch(
+                icono: Icons.dark_mode_outlined,
+                colorIcono: colorXP,
+                texto: 'Modo oscuro',
+                valor: modoOscuro,
+                onCambio: (v) => ref.read(modoOscuroProvider.notifier).state = v,
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -106,41 +109,42 @@ class _ConfiguracionScreenState extends ConsumerState<ConfiguracionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _Seccion(titulo: 'Cuenta'),
-        _GrupoTarjetas(
-          items: [
-            _ItemAccion(
-              icono: Icons.mail_outline,
-              colorIcono: colorPrimario,
-              fondoIcono: colorPrimario.withValues(alpha: 0.1),
-              texto: 'Cambiar correo electrónico',
-              subtexto: 'usuario@ejemplo.com',
-              onTap: () => _mostrarCambiarEmail(context),
-            ),
-            _ItemAccion(
-              icono: Icons.phone_outlined,
-              colorIcono: colorReportar,
-              fondoIcono: colorReportar.withValues(alpha: 0.1),
-              texto: 'Teléfono',
-              subtexto: '+34 612 345 678',
-              onTap: () => _mostrarCambiarTelefono(context),
-            ),
-            _ItemAccion(
-              icono: Icons.lock_outline,
-              colorIcono: colorPerdidas,
-              fondoIcono: colorPerdidas.withValues(alpha: 0.1),
-              texto: 'Cambiar contraseña',
-              onTap: () => _mostrarCambiarPassword(context),
-            ),
-            _ItemAccion(
-              icono: Icons.delete_outline,
-              colorIcono: colorError,
-              fondoIcono: colorError.withValues(alpha: 0.1),
-              texto: 'Eliminar cuenta',
-              colorTexto: colorError,
-              onTap: () => _mostrarConfirmacionEliminar(context),
-            ),
-          ],
+        const _TituloSeccion(titulo: 'Cuenta'),
+        const SizedBox(height: 16),
+        Card(
+          child: Column(
+            children: [
+              _ItemAccion(
+                icono: Icons.mail_outline_rounded,
+                colorIcono: colorPrimario,
+                texto: 'Cambiar correo electrónico',
+                subtexto: 'usuario@ejemplo.com',
+                onTap: () => _mostrarCambiarEmail(context),
+              ),
+              const Divider(height: 1, indent: 20, endIndent: 20),
+              _ItemAccion(
+                icono: Icons.phone_outlined,
+                colorIcono: colorPrimario,
+                texto: 'Teléfono',
+                subtexto: '+34 612 345 678',
+                onTap: () => _mostrarCambiarTelefono(context),
+              ),
+              const Divider(height: 1, indent: 20, endIndent: 20),
+              _ItemAccion(
+                icono: Icons.lock_outline_rounded,
+                colorIcono: const Color(0xFF0A0A0A),
+                texto: 'Cambiar contraseña',
+                onTap: () => _mostrarCambiarPassword(context),
+              ),
+              const Divider(height: 1, indent: 20, endIndent: 20),
+              _ItemAccion(
+                icono: Icons.delete_outline_rounded,
+                colorIcono: colorError,
+                texto: 'Eliminar cuenta',
+                onTap: () => _mostrarConfirmacionEliminar(context),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -191,127 +195,174 @@ class _ConfiguracionScreenState extends ConsumerState<ConfiguracionScreen> {
     );
   }
 
-  // Modal generico reutilizable para los ajustes de cuenta
+  // Popup centrado reutilizable para los ajustes de cuenta
   void _mostrarModalAjuste({
     required BuildContext context,
     required String titulo,
     required List<Widget> hijos,
   }) {
-    showModalBottomSheet(
+    showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: 24, right: 24, top: 24,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(titulo, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            ...hijos,
-            const SizedBox(height: 20),
-            _BotonGuardar(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _mostrarConfirmacion(context, exito: true);
-              },
+      barrierDismissible: true,
+      builder: (ctx) {
+        final teclado = MediaQuery.viewInsetsOf(ctx).bottom;
+        return Dialog(
+          backgroundColor: colorBlanco,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _anchoMaxPopupConfig),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + teclado),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      titulo,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorTexto),
+                    ),
+                    const SizedBox(height: 16),
+                    ...hijos,
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: colorTexto,
+                                side: BorderSide(color: colorTexto.withValues(alpha: 0.12)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                minimumSize: const Size(0, 48),
+                              ),
+                              child: const Text(
+                                'Cancelar',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                _mostrarConfirmacion(context, exito: true);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                minimumSize: const Size(0, 48),
+                              ),
+                              child: const Text('Guardar'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   // Dialogo de confirmacion antes de borrar la cuenta
   void _mostrarConfirmacionEliminar(BuildContext context) {
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🗑️', style: TextStyle(fontSize: 40)),
-            const SizedBox(height: 12),
-            const Text('¿Eliminar cuenta?', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            const Text(
-              'Esta acción es permanente. Perderás todos tus datos y mascotas guardadas.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: colorTextoSuave),
-            ),
-            const SizedBox(height: 20),
-            Row(
+      builder: (ctx) => Dialog(
+        backgroundColor: colorBlanco,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _anchoMaxPopupConfig),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Cancelar', style: TextStyle(color: colorTexto)),
-                  ),
+                const Text('🗑️', style: TextStyle(fontSize: 36)),
+                const SizedBox(height: 12),
+                const Text(
+                  '¿Eliminar cuenta?',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorTexto),
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      context.go('/login');
-                    },
-                    style: ElevatedButton.styleFrom(backgroundColor: colorError),
-                    child: const Text('Eliminar', style: TextStyle(color: colorBlanco)),
-                  ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Esta acción es permanente. Perderás todos tus datos y mascotas guardadas.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: colorTextoSuave),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: colorTexto,
+                            side: BorderSide(color: colorTexto.withValues(alpha: 0.12)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            minimumSize: const Size(0, 48),
+                          ),
+                          child: const Text('Cancelar', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            context.go('/login');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            minimumSize: const Size(0, 48),
+                          ),
+                          child: const Text('Eliminar'),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-// Titulo de seccion
-class _Seccion extends StatelessWidget {
+// Titulo de seccion (mismo estilo que perfil)
+class _TituloSeccion extends StatelessWidget {
   final String titulo;
-  const _Seccion({required this.titulo});
+  const _TituloSeccion({required this.titulo});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        titulo,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: colorTextoSuave, letterSpacing: 1.1),
-      ),
-    );
-  }
-}
-
-// Agrupa varios items dentro de una tarjeta con separadores
-class _GrupoTarjetas extends StatelessWidget {
-  final List<Widget> items;
-  const _GrupoTarjetas({required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    final colores = Theme.of(context).colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colores.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          for (int i = 0; i < items.length; i++) ...[
-            items[i],
-            if (i < items.length - 1) const Divider(height: 1, indent: 16, endIndent: 16),
-          ]
-        ],
-      ),
+    return Text(
+      titulo,
+      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorTexto),
     );
   }
 }
@@ -320,25 +371,39 @@ class _GrupoTarjetas extends StatelessWidget {
 class _ItemSwitch extends StatelessWidget {
   final IconData icono;
   final Color colorIcono;
-  final Color fondoIcono;
   final String texto;
   final bool valor;
   final ValueChanged<bool> onCambio;
 
   const _ItemSwitch({
-    required this.icono, required this.colorIcono, required this.fondoIcono,
-    required this.texto, required this.valor, required this.onCambio,
+    required this.icono,
+    required this.colorIcono,
+    required this.texto,
+    required this.valor,
+    required this.onCambio,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: _IconoOpcion(icono: icono, colorIcono: colorIcono, fondoIcono: fondoIcono),
-      title: Text(texto, style: const TextStyle(fontSize: 14)),
-      trailing: Switch(
-        value: valor,
-        onChanged: onCambio,
-        activeThumbColor: colorPrimario,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        splashFactory: NoSplash.splashFactory,
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        leading: _IconoOpcion(icono: icono, colorIcono: colorIcono),
+        title: Text(
+          texto,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: colorTexto),
+        ),
+        trailing: Switch(
+          value: valor,
+          onChanged: onCambio,
+          activeThumbColor: colorPrimario,
+        ),
       ),
     );
   }
@@ -348,47 +413,60 @@ class _ItemSwitch extends StatelessWidget {
 class _ItemAccion extends StatelessWidget {
   final IconData icono;
   final Color colorIcono;
-  final Color fondoIcono;
   final String texto;
   final String? subtexto;
-  final Color? colorTexto;
   final VoidCallback onTap;
 
   const _ItemAccion({
-    required this.icono, required this.colorIcono, required this.fondoIcono,
-    required this.texto, required this.onTap, this.subtexto, this.colorTexto,
+    required this.icono,
+    required this.colorIcono,
+    required this.texto,
+    required this.onTap,
+    this.subtexto,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colores = Theme.of(context).colorScheme;
-
-    return ListTile(
-      onTap: onTap,
-      leading: _IconoOpcion(icono: icono, colorIcono: colorIcono, fondoIcono: fondoIcono),
-      title: Text(texto, style: TextStyle(fontSize: 14, color: colorTexto ?? colores.onSurface)),
-      subtitle: subtexto != null
-          ? Text(subtexto!, style: TextStyle(fontSize: 12, color: colores.onSurfaceVariant))
-          : null,
-      trailing: Icon(Icons.chevron_right, color: colorTexto ?? colores.onSurfaceVariant, size: 20),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        splashFactory: NoSplash.splashFactory,
+      ),
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        leading: _IconoOpcion(icono: icono, colorIcono: colorIcono),
+        title: Text(
+          texto,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: colorTexto),
+        ),
+        subtitle: subtexto != null
+            ? Text(subtexto!, style: const TextStyle(fontSize: 13, color: colorTextoSuave))
+            : null,
+        trailing: const Icon(Icons.chevron_right_rounded, color: colorTextoSuave),
+      ),
     );
   }
 }
 
-// Icono con fondo redondeado
+// Icono con fondo redondeado (mismo patron que perfil)
 class _IconoOpcion extends StatelessWidget {
   final IconData icono;
   final Color colorIcono;
-  final Color fondoIcono;
 
-  const _IconoOpcion({required this.icono, required this.colorIcono, required this.fondoIcono});
+  const _IconoOpcion({required this.icono, required this.colorIcono});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 34, height: 34,
-      decoration: BoxDecoration(color: fondoIcono, borderRadius: BorderRadius.circular(10)),
-      child: Icon(icono, color: colorIcono, size: 18),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: _fondoIconoConfiguracion,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icono, color: colorIcono, size: 22),
     );
   }
 }
@@ -413,26 +491,10 @@ class _CampoTexto extends StatelessWidget {
       controller: controlador,
       keyboardType: tipo,
       obscureText: esPassword,
+      style: const TextStyle(fontSize: 15, color: colorTexto),
       decoration: InputDecoration(
         labelText: etiqueta,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-}
-
-// Boton de guardar reutilizable
-class _BotonGuardar extends StatelessWidget {
-  final VoidCallback onPressed;
-  const _BotonGuardar({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        child: const Text('Guardar', style: TextStyle(color: colorBlanco)),
+        labelStyle: const TextStyle(color: colorTextoSuave, fontSize: 15),
       ),
     );
   }

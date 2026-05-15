@@ -447,11 +447,20 @@ class _DetalleReporteSheet extends StatelessWidget {
             const Divider(),
             const SizedBox(height: 16),
             if (!reporte.encontrado) ...[
-              _BotonAccion(
-                icono: Icons.check_circle_outline,
-                texto: 'Marcar como encontrada',
-                color: colorReportar,
-                onTap: onMarcarEncontrado,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: onMarcarEncontrado,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorPrimario,
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text(
+                    'Marcar como encontrada',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
               const SizedBox(height: 10),
               _BotonAccion(

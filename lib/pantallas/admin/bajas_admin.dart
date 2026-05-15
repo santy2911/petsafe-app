@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../tema.dart';
 import '../../providers/animales_provider.dart';
+import '../../widgets/boton_notificaciones.dart';
 
 class AdminHistoricoBajasScreen extends ConsumerWidget {
   const AdminHistoricoBajasScreen({super.key});
@@ -17,11 +18,15 @@ class AdminHistoricoBajasScreen extends ConsumerWidget {
       backgroundColor: colorFondo,
       appBar: AppBar(
         title: const Text('Histórico de Bajas'),
+        actions: const [
+          BotonNotificaciones(),
+          SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
             child: Row(
               children: [
                 const Icon(Icons.history_rounded, color: colorTextoSuave),
@@ -42,12 +47,8 @@ class AdminHistoricoBajasScreen extends ConsumerWidget {
           else
             Expanded(
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 32),
-                decoration: BoxDecoration(
-                  color: colorBlanco,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFEBF2F0)),
-                ),
+                margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                decoration: decorationSuperficieLista(),
                 clipBehavior: Clip.antiAlias,
                 child: SingleChildScrollView(
                   child: DataTable(
@@ -89,7 +90,6 @@ class AdminHistoricoBajasScreen extends ConsumerWidget {
                 ),
               ),
             ),
-          const SizedBox(height: 32),
         ],
       ),
     );

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../tema.dart';
 import '../../modelos/reporte.dart';
 import '../../providers/reportes_provider.dart';
+import '../../widgets/boton_notificaciones.dart';
 
 class AdminReportesScreen extends ConsumerStatefulWidget {
   const AdminReportesScreen({super.key});
@@ -21,11 +22,26 @@ class _AdminReportesScreenState extends ConsumerState<AdminReportesScreen> {
       backgroundColor: colorFondo,
       appBar: AppBar(
         title: const Text('Gestión de Reportes de Extravío'),
+        actions: [
+          const BotonNotificaciones(),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: state.cargando ? null : () => ref.read(reportesProvider.notifier).cargarReportes(),
+            icon: state.cargando && state.reportes.isNotEmpty
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: colorPrimario),
+                  )
+                : const Icon(Icons.refresh_rounded),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: state.cargando && state.reportes.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : Padding(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(24),
               child: state.reportes.isEmpty
                   ? const Center(child: Text('No hay reportes registrados'))
                   : GridView.builder(

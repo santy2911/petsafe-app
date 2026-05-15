@@ -4,8 +4,6 @@ import '../../tema.dart';
 import '../../modelos/animal.dart';
 import '../../datos/favoritos_manager.dart';
 import '../../datos/solicitudes_manager.dart';
-import '../adopcion/detalle_animal_screen.dart';
-
 // Pantalla para ver que animales hemos solicitado y cuales tenemos guardados
 class MisAdopcionesScreen extends StatefulWidget {
   const MisAdopcionesScreen({super.key});
@@ -49,11 +47,7 @@ class _MisAdopcionesScreenState extends State<MisAdopcionesScreen>
 
   // Abrir detalle y refrescar al volver
   void _abrirDetalle(Animal animal) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => AnimalDetalleScreen(animal: animal),
-      ),
-    ).then((_) {
+    context.push('/animal/${animal.id}', extra: animal).then((_) {
       setState(() {
         _solicitudes = List.from(SolicitudesManager().solicitudes);
         _favoritos = List.from(FavoritosManager().favoritos);

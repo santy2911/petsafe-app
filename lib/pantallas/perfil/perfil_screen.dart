@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../tema.dart';
-import '../../providers/estadisticas_provider.dart';
 import '../../providers/perfil_provider.dart';
 import '../../providers/puntos_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -61,10 +60,7 @@ class _PerfilScreenState extends ConsumerState<PerfilScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GestureDetector(
-                        onTap: () => context.go('/recompensas'),
-                        child: const _TarjetaPuntosPremium(),
-                      ),
+                      const _TarjetaPuntosPremium(),
                       const SizedBox(height: 32),
                       _buildSectionTitle('Mis Solicitudes de Adopción'),
                       const SizedBox(height: 16),
@@ -138,23 +134,49 @@ class _PerfilScreenState extends ConsumerState<PerfilScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Editar Perfil'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre')),
-            const SizedBox(height: 16),
-            TextField(controller: telefonoCtrl, decoration: const InputDecoration(labelText: 'Teléfono'), keyboardType: TextInputType.phone),
-          ],
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: colorBlanco,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+        title: const Text(
+          'Editar Perfil',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorTexto),
         ),
+        content: SizedBox(
+          width: 380,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre')),
+              const SizedBox(height: 20),
+              TextField(controller: telefonoCtrl, decoration: const InputDecoration(labelText: 'Teléfono'), keyboardType: TextInputType.phone),
+            ],
+          ),
+        ),
+        actionsAlignment: MainAxisAlignment.spaceBetween,
+        actionsOverflowButtonSpacing: 12,
+        actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: colorTexto,
+              side: BorderSide(color: colorTexto.withValues(alpha: 0.12)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            ),
+            child: const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
           ElevatedButton(
             onPressed: () async {
               await ref.read(authProvider.notifier).actualizarPerfil(nombreCtrl.text, telefonoCtrl.text);
-              if (mounted) Navigator.pop(context);
+              if (mounted) Navigator.pop(ctx);
             },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
             child: const Text('Guardar'),
           ),
         ],
@@ -171,22 +193,33 @@ class _PerfilScreenState extends ConsumerState<PerfilScreen> {
       onPressed: () => ref.read(authProvider.notifier).logout(),
       icon: const Icon(Icons.logout_rounded),
       label: const Text('Cerrar Sesión'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.red.withValues(alpha: 0.1),
-        foregroundColor: Colors.red,
-        elevation: 0,
-        minimumSize: const Size(double.infinity, 56),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.all(Colors.red.withValues(alpha: 0.1)),
+        foregroundColor: WidgetStateProperty.all(Colors.red),
+        elevation: WidgetStateProperty.all(0),
+        minimumSize: WidgetStateProperty.all(const Size(double.infinity, 56)),
+        shape: WidgetStateProperty.all(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
+        splashFactory: NoSplash.splashFactory,
       ),
     );
   }
 }
 
-class _TarjetaPuntosPremium extends ConsumerWidget {
+class _TarjetaPuntosPremium extends ConsumerStatefulWidget {
   const _TarjetaPuntosPremium();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_TarjetaPuntosPremium> createState() => _TarjetaPuntosPremiumState();
+}
+
+class _TarjetaPuntosPremiumState extends ConsumerState<_TarjetaPuntosPremium> {
+  bool _expandido = false;
+
+  @override
+  Widget build(BuildContext context) {
     final puntosState = ref.watch(puntosProvider);
     final puntos = puntosState.puntos;
     final nivel = ref.watch(nivelProvider);
@@ -194,64 +227,124 @@ class _TarjetaPuntosPremium extends ConsumerWidget {
     final historial = puntosState.historial.take(3).toList();
 
     return Container(
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF4F46E5)]),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [BoxShadow(color: const Color(0xFF4F46E5).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10))],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => setState(() => _expandido = !_expandido),
+              splashColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              splashFactory: NoSplash.splashFactory,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 12, _expandido ? 16 : 20),
+                child: Row(
+                  children: [
+                    const Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 28),
+                    const SizedBox(width: 10),
+                    Text(
+                      '$puntos XP',
+                      style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    Text(nivel.emoji, style: const TextStyle(fontSize: 22)),
+                    const SizedBox(width: 6),
+                    Text(
+                      nivel.nombre,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      _expandido ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                      color: Colors.white70,
+                      size: 28,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstCurve: Curves.easeInOut,
+            secondCurve: Curves.easeInOut,
+            sizeCurve: Curves.easeInOut,
+            crossFadeState: _expandido ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Tus Puntos', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                  Row(
-                    children: [
-                      const Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 28),
-                      const SizedBox(width: 8),
-                      Text('$puntos XP', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-                    ],
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: progreso,
+                      minHeight: 10,
+                      backgroundColor: Colors.white12,
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    nivel.puntosMaximos != null
+                        ? 'Progreso hacia ${nivel.siguiente?.nombre ?? nivel.nombre}'
+                        : '¡Nivel máximo alcanzado!',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(color: Colors.white24),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Actividad reciente',
+                    style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  if (historial.isEmpty)
+                    const Text('No hay movimientos recientes', style: TextStyle(color: Colors.white54, fontSize: 12))
+                  else
+                    ...historial.map((m) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  m.accion,
+                                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                '+${m.puntos} XP',
+                                style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        )),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => context.go('/recompensas'),
+                      icon: const Icon(Icons.redeem_rounded, color: Colors.white, size: 20),
+                      label: const Text('Ver recompensas', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                      style: TextButton.styleFrom(foregroundColor: Colors.white),
+                    ),
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(16)),
-                child: Text(nivel.emoji, style: const TextStyle(fontSize: 24)),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 24),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(value: progreso, minHeight: 10, backgroundColor: Colors.white12, valueColor: const AlwaysStoppedAnimation<Color>(Colors.white)),
-          ),
-          const SizedBox(height: 12),
-          Text(nivel.nombre, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          
-          const SizedBox(height: 20),
-          const Divider(color: Colors.white24),
-          const SizedBox(height: 12),
-          const Text('Actividad reciente', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          if (historial.isEmpty)
-            const Text('No hay movimientos recientes', style: TextStyle(color: Colors.white54, fontSize: 12))
-          else
-            ...historial.map((m) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(m.accion, style: const TextStyle(color: Colors.white, fontSize: 13)),
-                  Text('+${m.puntos} XP', style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 13)),
-                ],
-              ),
-            )),
         ],
       ),
     );
@@ -272,18 +365,48 @@ class _ListaMisSolicitudes extends ConsumerWidget {
     return Column(
       children: solicitudes.map((s) => Card(
         margin: const EdgeInsets.only(bottom: 12),
-        child: InkWell(
-          onTap: () {
-            // Buscamos el animal en el provider para tener el objeto completo
-            final animal = ref.read(animalesProvider).animales.firstWhere((a) => a.id == s.idAnimal);
-            context.push('/animal/${animal.id}', extra: animal);
-          },
-          borderRadius: BorderRadius.circular(12),
+        surfaceTintColor: Colors.transparent,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            hoverColor: Colors.transparent,
+            splashFactory: NoSplash.splashFactory,
+          ),
           child: ListTile(
+            onTap: () {
+              final animal = ref.read(animalesProvider).animales.firstWhere((a) => a.id == s.idAnimal);
+              context.push('/animal/${animal.id}', extra: animal);
+            },
             contentPadding: const EdgeInsets.all(12),
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(s.urlImagenAnimal, width: 60, height: 60, fit: BoxFit.cover),
+              child: Image.network(
+                s.urlImagenAnimal,
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 60,
+                  height: 60,
+                  color: colorFondo,
+                  child: const Icon(Icons.pets_rounded, color: colorTextoSuave, size: 28),
+                ),
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    width: 60,
+                    height: 60,
+                    color: colorFondo,
+                    alignment: Alignment.center,
+                    child: const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: colorPrimario),
+                    ),
+                  );
+                },
+              ),
             ),
             title: Text(s.nombreAnimal, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text('Solicitado: ${s.fechaSolicitud.toString().split(' ')[0]}'),
@@ -309,42 +432,79 @@ class _ListaMisReportes extends ConsumerWidget {
     return Column(
       children: reportes.map((r) => Card(
         margin: const EdgeInsets.only(bottom: 12),
-        child: InkWell(
-          onTap: () => context.push('/reporte/${r.id}', extra: r),
-          borderRadius: BorderRadius.circular(12),
-          child: Column(
-            children: [
-              ListTile(
+        surfaceTintColor: Colors.transparent,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Theme(
+              data: Theme.of(context).copyWith(
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                hoverColor: Colors.transparent,
+                splashFactory: NoSplash.splashFactory,
+              ),
+              child: ListTile(
+                onTap: () => context.push('/reporte/${r.id}', extra: r),
                 contentPadding: const EdgeInsets.all(12),
                 leading: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(r.imagenUrl, width: 60, height: 60, fit: BoxFit.cover),
+                  child: Image.network(
+                    r.imagenUrl,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 60,
+                      height: 60,
+                      color: colorFondo,
+                      child: const Icon(Icons.pets_rounded, color: colorTextoSuave, size: 28),
+                    ),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        width: 60,
+                        height: 60,
+                        color: colorFondo,
+                        alignment: Alignment.center,
+                        child: const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: colorPrimario),
+                        ),
+                      );
+                    },
+                  ),
                 ),
                 title: Text(r.descripcion, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(r.fecha.toString().split(' ')[0]),
                 trailing: _StatusChip(estado: r.encontrado ? 'Encontrado' : 'Perdido'),
               ),
-              if (!r.encontrado)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _confirmarEncontrado(context, ref, r.id),
-                      icon: const Icon(Icons.check_circle_outline, size: 18),
-                      label: const Text('Marcar como encontrado'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorPrimarioLight,
-                        foregroundColor: colorPrimario,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+            ),
+            if (!r.encontrado)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    splashFactory: NoSplash.splashFactory,
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () => _confirmarEncontrado(context, ref, r.id),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorPrimario,
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text(
+                      'Marcar como encontrado',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       )).toList(),
     );
@@ -436,12 +596,21 @@ class _MenuOption extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
-        child: ListTile(
-          onTap: onTap,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color)),
-          title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          trailing: const Icon(Icons.chevron_right_rounded, color: colorTextoSuave),
+        surfaceTintColor: Colors.transparent,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            hoverColor: Colors.transparent,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          child: ListTile(
+            onTap: onTap,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color)),
+            title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            trailing: const Icon(Icons.chevron_right_rounded, color: colorTextoSuave),
+          ),
         ),
       ),
     );

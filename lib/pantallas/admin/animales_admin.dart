@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../tema.dart';
 import '../../modelos/animal.dart';
 import '../../providers/animales_provider.dart';
+import '../../widgets/boton_notificaciones.dart';
 
 class AdminAnimalesScreen extends ConsumerStatefulWidget {
   const AdminAnimalesScreen({super.key});
@@ -26,133 +27,145 @@ class _AdminAnimalesScreenState extends ConsumerState<AdminAnimalesScreen> {
       appBar: AppBar(
         title: const Text('Gestión de Animales'),
         actions: [
+          const BotonNotificaciones(),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: state.cargando ? null : () => ref.read(animalesProvider.notifier).recargar(),
+            icon: state.cargando
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: colorPrimario),
+                  )
+                : const Icon(Icons.refresh_rounded),
+          ),
+          const SizedBox(width: 8),
           ElevatedButton.icon(
             onPressed: () => _mostrarDialogoAnimal(context),
             icon: const Icon(Icons.add, size: 18),
             label: const Text('Añadir Animal'),
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size(180, 40),
+              minimumSize: const Size(0, 40),
               padding: const EdgeInsets.symmetric(horizontal: 16),
             ),
           ),
-          const SizedBox(width: 32),
+          const SizedBox(width: 8),
         ],
       ),
-      body: Column(
-        children: [
-          // Barra de búsqueda
-          Padding(
-            padding: const EdgeInsets.all(32),
-            child: TextField(
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
               onChanged: (val) => setState(() => filtro = val),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Buscar por nombre...',
-                prefixIcon: const Icon(Icons.search, color: colorTextoSuave),
-                constraints: const BoxConstraints(maxWidth: 400),
-                fillColor: colorBlanco,
+                prefixIcon: Icon(Icons.search, color: colorTextoSuave),
               ),
             ),
-          ),
-
-          if (state.cargando && state.animales.isEmpty)
-            const Expanded(child: Center(child: CircularProgressIndicator()))
-          else if (state.error != null)
-            Expanded(child: Center(child: Text('Error: ${state.error}')))
-          else
-            // Tabla de datos
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 32),
-                decoration: BoxDecoration(
-                  color: colorBlanco,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFEBF2F0)),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      columnSpacing: 60,
-                      headingRowColor: WidgetStateProperty.all(colorFondo),
-                      columns: const [
-                        DataColumn(label: Text('Foto', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('Nombre', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('Especie', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('Edad', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('Estado', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('Acciones', style: TextStyle(fontWeight: FontWeight.bold))),
-                      ],
-                      rows: animalesFiltrados.map((animal) {
-                        return DataRow(cells: [
-                          DataCell(
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  animal.imagenUrl,
-                                  width: 40,
-                                  height: 40,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(Icons.pets),
-                                ),
-                              ),
-                            ),
-                          ),
-                          DataCell(Text(animal.nombre)),
-                          DataCell(Text(animal.especie)),
-                          DataCell(Text('${animal.edad} años')),
-                          DataCell(
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: animal.estado == 'Disponible'
-                                    ? colorPrimarioLight
-                                    : colorFondo,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                animal.estado,
-                                style: TextStyle(
-                                  color: animal.estado == 'Disponible' ? colorPrimario : colorTextoSuave,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined, color: colorPrimario, size: 20),
-                                  onPressed: () => _mostrarDialogoAnimal(context, animal: animal),
-                                  tooltip: 'Editar',
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.no_accounts_outlined, color: colorTextoSuave, size: 20),
-                                  onPressed: () => _mostrarOpcionesBaja(context, animal),
-                                  tooltip: 'Dar de baja',
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: colorError, size: 20),
-                                  onPressed: () => _confirmarEliminarFisico(context, animal),
-                                  tooltip: 'Eliminar permanentemente',
-                                ),
+            const SizedBox(height: 16),
+            if (state.cargando && state.animales.isEmpty)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else if (state.error != null)
+              Expanded(child: Center(child: Text('Error: ${state.error}')))
+            else
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child: Container(
+                        width: double.infinity,
+                        decoration: decorationSuperficieLista(),
+                        clipBehavior: Clip.antiAlias,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                            child: DataTable(
+                              columnSpacing: 24,
+                              horizontalMargin: 16,
+                              headingRowColor: WidgetStateProperty.all(colorFondo),
+                              columns: const [
+                                DataColumn(label: Text('Foto', style: TextStyle(fontWeight: FontWeight.bold))),
+                                DataColumn(label: Text('Nombre', style: TextStyle(fontWeight: FontWeight.bold))),
+                                DataColumn(label: Text('Especie', style: TextStyle(fontWeight: FontWeight.bold))),
+                                DataColumn(label: Text('Edad', style: TextStyle(fontWeight: FontWeight.bold))),
+                                DataColumn(label: Text('Estado', style: TextStyle(fontWeight: FontWeight.bold))),
+                                DataColumn(label: Text('Acciones', style: TextStyle(fontWeight: FontWeight.bold))),
                               ],
+                              rows: animalesFiltrados.map((animal) {
+                                return DataRow(cells: [
+                                  DataCell(
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          animal.imagenUrl,
+                                          width: 40,
+                                          height: 40,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => const Icon(Icons.pets),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(Text(animal.nombre)),
+                                  DataCell(Text(animal.especie)),
+                                  DataCell(Text('${animal.edad} años')),
+                                  DataCell(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: animal.estado == 'Disponible'
+                                            ? colorPrimarioLight
+                                            : colorFondo,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        animal.estado,
+                                        style: TextStyle(
+                                          color: animal.estado == 'Disponible' ? colorPrimario : colorTextoSuave,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Row(
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.edit_outlined, color: colorPrimario, size: 20),
+                                          onPressed: () => _mostrarDialogoAnimal(context, animal: animal),
+                                          tooltip: 'Editar',
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.no_accounts_outlined, color: colorTextoSuave, size: 20),
+                                          onPressed: () => _mostrarOpcionesBaja(context, animal),
+                                          tooltip: 'Dar de baja',
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline, color: colorError, size: 20),
+                                          onPressed: () => _confirmarEliminarFisico(context, animal),
+                                          tooltip: 'Eliminar permanentemente',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ]);
+                              }).toList(),
                             ),
                           ),
-                        ]);
-                      }).toList(),
-                    ),
-                  ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
-          const SizedBox(height: 32),
-        ],
+          ],
+        ),
       ),
     );
   }

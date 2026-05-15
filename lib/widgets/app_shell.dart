@@ -181,8 +181,6 @@ class _SidebarItem extends StatefulWidget {
 }
 
 class _SidebarItemState extends State<_SidebarItem> {
-  bool _isHovered = false;
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -191,7 +189,6 @@ class _SidebarItemState extends State<_SidebarItem> {
         message: widget.colapsada ? widget.label : '',
         child: InkWell(
           onTap: () => context.go(widget.ruta),
-          onHover: (hover) => setState(() => _isHovered = hover),
           borderRadius: BorderRadius.circular(16),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -214,11 +211,12 @@ class _SidebarItemState extends State<_SidebarItem> {
                 if (!widget.colapsada)
                   Expanded(
                     child: Text(
-                      widget.label, 
-                      style: TextStyle(
-                        color: widget.activo ? colorPrimario : colorTexto, 
-                        fontWeight: widget.activo ? FontWeight.bold : FontWeight.w500, 
-                        fontSize: 15
+                      widget.label,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ).copyWith(
+                        color: widget.activo ? colorPrimario : colorTexto,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -241,8 +239,6 @@ class _LogoutButton extends StatefulWidget {
 }
 
 class _LogoutButtonState extends State<_LogoutButton> {
-  bool _isHovered = false;
-
   @override
   Widget build(BuildContext context) {
     return Consumer(
@@ -253,7 +249,6 @@ class _LogoutButtonState extends State<_LogoutButton> {
             message: widget.colapsada ? 'Cerrar Sesión' : '',
             child: InkWell(
               onTap: () => ref.read(authProvider.notifier).logout(),
-              onHover: (hover) => setState(() => _isHovered = hover),
               borderRadius: BorderRadius.circular(16),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),

@@ -29,15 +29,18 @@ class _AnimalDetalleScreenState extends ConsumerState<AnimalDetalleScreen> {
   }
 
   void _mostrarBottomSheetAdopcion() {
+    final yaTiene = ref.read(adopcionesProvider).solicitudes.any((s) => s.idAnimal == widget.animal.id);
+    if (yaTiene) return;
+
     final comentarioCtrl = TextEditingController();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
         ),
         decoration: const BoxDecoration(
           color: colorBlanco,
@@ -86,16 +89,46 @@ class _AnimalDetalleScreenState extends ConsumerState<AnimalDetalleScreen> {
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: () async {
+                  if (ref.read(adopcionesProvider).solicitudes.any((s) => s.idAnimal == widget.animal.id)) {
+                    if (!sheetContext.mounted) return;
+                    Navigator.pop(sheetContext);
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Ya tienes una solicitud de adopción para este animal.'),
+                        backgroundColor: colorTexto,
+                      ),
+                    );
+                    return;
+                  }
                   final exito = await ref.read(adopcionesProvider.notifier).crearSolicitud(
                     idAnimal: widget.animal.id,
                     comentarios: comentarioCtrl.text,
                   );
-                  if (exito && mounted) {
-                    Navigator.pop(context);
+                  if (!sheetContext.mounted) return;
+                  if (exito) {
+                    Navigator.pop(sheetContext);
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('¡Solicitud enviada con éxito!'),
-                        backgroundColor: colorReportar,
+                        content: Text(
+                          '¡Solicitud enviada con éxito!',
+                          style: TextStyle(color: colorBlanco, fontWeight: FontWeight.w600),
+                        ),
+                        backgroundColor: colorPrimario,
+                      ),
+                    );
+                  } else {
+                    if (!mounted) return;
+                    final duplicado = ref.read(adopcionesProvider).solicitudes.any((s) => s.idAnimal == widget.animal.id);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          duplicado
+                              ? 'Ya tienes una solicitud de adopción para este animal.'
+                              : 'No se pudo enviar la solicitud. Inténtalo de nuevo.',
+                        ),
+                        backgroundColor: duplicado ? colorTexto : colorError,
                       ),
                     );
                   }
@@ -119,7 +152,8 @@ class _AnimalDetalleScreenState extends ConsumerState<AnimalDetalleScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final esAdmin = authState.usuarioActual?.rol == 'Admin';
-    final yaSolicitado = ref.watch(adopcionesProvider.notifier).tieneSolicitudLocal(widget.animal.id);
+    final solicitudes = ref.watch(adopcionesProvider).solicitudes;
+    final yaSolicitado = solicitudes.any((s) => s.idAnimal == widget.animal.id);
     
     // Lista de imágenes (usamos la principal + las de la galería si existen)
     final listaImagenes = [widget.animal.imagenUrl, ...widget.animal.imagenes];
