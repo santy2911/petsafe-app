@@ -60,15 +60,23 @@ class AdopcionesService {
 
   // Comprobar si el usuario ya tiene una solicitud para un animal
   static Future<bool> tieneSolicitud(String idAnimal) async {
-    // MOCK temporal — eliminar cuando llegue el backend
+    // MOCK temporal
     await Future.delayed(const Duration(milliseconds: 300));
     return false;
+  }
 
-    // Cuando llegue el backend, descomenta esto y borra el mock:
-    // final data = await ApiService.get(
-    //   '/adopciones/check/$idAnimal',
-    //   token: AuthService.token,
-    // );
-    // return data['tieneSolicitud'] as bool;
+  // --- MÉTODOS PARA ADMIN ---
+
+  // Obtener todas las solicitudes del sistema (para el refugio)
+  static Future<List<SolicitudAdopcion>> getAllSolicitudes() async {
+    // MOCK temporal — usamos el mock que creamos antes
+    await Future.delayed(const Duration(milliseconds: 500));
+    // Necesitamos importar el mock
+    return []; // Se llenará en el provider usando el archivo mock por ahora
+  }
+
+  static Future<void> actualizarEstado(String idSolicitud, String nuevoEstado) async {
+    // MOCK temporal
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 }

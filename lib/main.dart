@@ -19,7 +19,7 @@ class MiApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'PetSafe',
       debugShowCheckedModeBanner: false,
-      routerConfig: rutasApp,
+      routerConfig: ref.watch(routerProvider),
       themeMode: modoOscuro ? ThemeMode.dark : ThemeMode.light,
       theme: temaApp,
       // Tema oscuro basico

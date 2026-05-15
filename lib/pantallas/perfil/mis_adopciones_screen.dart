@@ -51,7 +51,7 @@ class _MisAdopcionesScreenState extends State<MisAdopcionesScreen>
   void _abrirDetalle(Animal animal) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => DetalleAnimalScreen(animal: animal, usarPop: true),
+        builder: (_) => AnimalDetalleScreen(animal: animal),
       ),
     ).then((_) {
       setState(() {
